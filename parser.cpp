@@ -1,5 +1,3 @@
-// parser.cpp
-
 #include "parser.h"
 #include <sstream>
 #include <vector>
@@ -12,7 +10,7 @@ Product parseProductLine(const string& line) {
     string token;
     int column = 0;
 
-    // we're gonna split by comma, but watch for quotes later
+    //split by comma
     while (getline(ss, token, ',')) {
         switch (column) {
             case 0: p.id = token; break;

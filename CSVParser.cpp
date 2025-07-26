@@ -1,23 +1,39 @@
-#include "CSVParser.h"
+#include "parser.h"
 #include <sstream>
+#include <vector>
 
-Product parseProductLine(const std::string& line) {
+using namespace std;
+
+Product parseProductLine(const string& line) {
     Product p;
-    std::stringstream ss(line);
-    std::string temp;
+    stringstream ss(line);
+    string token;
+    int col = 0;
 
-    std::getline(ss, p.id, ',');
-    std::getline(ss, p.name, ',');
-    std::getline(ss, p.asin, ',');
-    std::getline(ss, p.price, ',');
-
-    //handle categories
-    std::getline(ss, temp, ',');
-    std::stringstream catStream(temp);
-    std::string category;
-    while (std::getline(catStream, category, '|')) {
-        p.categories.push_back(category);
+    while (getline(ss, token, ',')) {
+        switch (col) {
+            case 0: p.id = token; break;            //Uniq Id
+            case 1: p.name = token; break;          //Product Name
+            case 3: p.asin = token; break;          //ASIN
+            case 7: p.price = token; break;         //Selling Price
+            case 4: {
+                if (token.empty()) {
+                    p.categories.push_back("NA");
+                } else {
+                    stringstream catStream(token);
+                    string cat;
+                    while (getline(catStream, cat, '|')) {
+                        p.categories.push_back(cat);
+                    }
+                }
+                break;
+            }
+            default: break;
+        }
+        col++;
+        if (col > 7) break; //stop early
     }
 
     return p;
 }
+

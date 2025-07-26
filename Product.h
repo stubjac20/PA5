@@ -12,7 +12,7 @@ struct Product {
     string price;
     vector<string> categories;
 
-    void print() const; // just declare it here
+    void print() const; 
 };
 
 #endif

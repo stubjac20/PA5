@@ -2,41 +2,45 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include "InventorySystem.h"
 
 using namespace std;
 
 void printHelp() {
     cout << "Supported commands:\n";
-    cout << " 1. find <inventoryid> ,  Look up and print product details.\n";
-    cout << " 2. listInventory <category_string> , Print all products that match the category.\n";
+    cout << " 1. find <inventoryid> , Look up and print product details.\n";
+    cout << " 2. listInventory <category> [desc|merge|merge desc] , Show products in that category sorted by price.\n";
+    cout << " :help , Show this help screen\n";
+    cout << " :quit , Exit the program\n";
     cout << endl;
 }
 
-//checks if the user typed valid command
-bool isValidCommand(string input) {
+//basic check if command is valid
+bool isValidCommand(const string& input) {
     return input == ":help" || input.rfind("find ", 0) == 0 || input.rfind("listInventory ", 0) == 0;
 }
 
-void handleCommand(string input, InventorySystem& system) {
+void handleCommand(const string& input, InventorySystem& system) {
     if (input == ":help") {
         printHelp();
     } else if (input.rfind("find ", 0) == 0) {
         string id = input.substr(5);
         system.findProductById(id);
     } else if (input.rfind("listInventory ", 0) == 0) {
-        string category = input.substr(14);
-        system.listInventoryByCategory(category);
+        //break into words
+        istringstream iss(input);
+        string cmd, category, arg1, arg2;
+        iss >> cmd >> category >> arg1 >> arg2;
+
+        system.listInventoryByCategory(category, arg1, arg2);
     }
 }
 
-
 void setupSystem(InventorySystem& system) {
-    cout << "\nLoading inventory." << endl;
+    cout << "\nLoading inventory..." << endl;
 
-    
-    string fileName = "products.csv";
-
+    string fileName = "amazon.csv";
     ifstream file(fileName);
     if (!file.is_open()) {
         cout << "Error: could not open " << fileName << endl;
@@ -44,14 +48,14 @@ void setupSystem(InventorySystem& system) {
     }
 
     string line;
-    getline(file, line); 
+    getline(file, line); //skip header
 
     while (getline(file, line)) {
         system.addProductFromCSV(line);
     }
 
     file.close();
-    cout << "Done" << endl;
+    cout << "Done loading.\n" << endl;
 }
 
 int main() {
@@ -68,7 +72,7 @@ int main() {
         if (isValidCommand(input)) {
             handleCommand(input, system);
         } else {
-            cout << "not recognized type :help" << endl;
+            cout << "Command not recognized. Type :help" << endl;
         }
         cout << "> ";
     }
