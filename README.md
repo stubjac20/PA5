@@ -3,7 +3,7 @@
 Built on PA4. This version adds sorting for the `listInventory` command.
 
 ## Commands
-`find <id>` → prints product info
+`find <id>` prints product info
 `listInventory <category>` → default sort by price (insertion sort, ascending)
 `listInventory <category> desc` → insertion sort, descending
 `listInventory <category> merge` → merge sort, ascending
