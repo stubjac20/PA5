@@ -1,22 +1,29 @@
 #include "parser.h"
 #include <sstream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
+
+static string trim(const string& s) {
+    size_t start = s.find_first_not_of(" \t\r\n\"");
+    size_t end = s.find_last_not_of(" \t\r\n\"");
+    return (start == string::npos) ? "" : s.substr(start, end - start + 1);
+}
 
 Product parseProductLine(const string& line) {
     Product p;
     stringstream ss(line);
     string token;
-    int column = 0;
+    int col = 0;
 
-    //split by comma
     while (getline(ss, token, ',')) {
-        switch (column) {
-            case 0: p.id = token; break;
-            case 1: p.name = token; break;
-            case 2: p.asin = token; break;
-            case 3: p.price = token; break;
+        token = trim(token);
+
+        switch (col) {
+            case 0: p.id = token; break;            //Uniq Id
+            case 1: p.name = token; break;          //Product Name
+            case 3: p.asin = token; break;          //ASIN
             case 4: {
                 if (token.empty()) {
                     p.categories.push_back("NA");
@@ -24,13 +31,18 @@ Product parseProductLine(const string& line) {
                     stringstream catStream(token);
                     string cat;
                     while (getline(catStream, cat, '|')) {
-                        p.categories.push_back(cat);
+                        cat = trim(cat);
+                        if (!cat.empty())
+                            p.categories.push_back(cat);
                     }
                 }
                 break;
             }
+            case 7: p.price = token; break;         //Selling Price
         }
-        column++;
+
+        col++;
+        if (col > 7) break;
     }
 
     return p;

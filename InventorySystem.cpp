@@ -7,25 +7,31 @@
 
 using namespace std;
 
-InventorySystem::InventorySystem() {
-    //nothing here
+InventorySystem::InventorySystem() {}
+
+InventorySystem::~InventorySystem() {
+    for (int i = 0; i < categoryTable.size(); ++i) {
+        auto bucket = categoryTable.getBucketArray()[i].iterator();
+        while (bucket.hasNext()) {
+            auto& entry = bucket.next();
+            delete entry.second;
+        }
+    }
 }
 
 void InventorySystem::addProductFromCSV(const string& line) {
     Product p = parseProductLine(line);
-
-    //add to product table
     productTable.insert(p.id, p);
 
-    //add pointer to category lists
     for (const string& cat : p.categories) {
-        LinkedList<Product*>* categoryList = categoryTable.get(cat);
-        if (categoryList == nullptr) {
-            LinkedList<Product*> newList;
-            newList.insertBack(productTable.get(p.id));
+        cout << "CATEGORY: [" << cat << "]" << endl;
+        LinkedList<Product*>** listPtr = categoryTable.get(cat);
+        if (listPtr == nullptr) {
+            LinkedList<Product*>* newList = new LinkedList<Product*>();
+            newList->insertBack(productTable.get(p.id));
             categoryTable.insert(cat, newList);
         } else {
-            categoryList->insertBack(productTable.get(p.id));
+            (*listPtr)->insertBack(productTable.get(p.id));
         }
     }
 }
@@ -39,60 +45,42 @@ void InventorySystem::findProductById(const string& id) {
     }
 }
 
-//list inventory by category, optionally sorted with flags
 void InventorySystem::listInventoryByCategory(const string& category, const string& arg1, const string& arg2) {
-    LinkedList<Product*>* list = categoryTable.get(category);
-    if (list == nullptr) {
+    LinkedList<Product*>** listPtr = categoryTable.get(category);
+    if (listPtr == nullptr) {
         cout << "Bad Category" << endl;
         return;
     }
 
-    //copy to vector so we can sort it
+    LinkedList<Product*>* list = *listPtr;
+
     vector<Product*> products;
     auto it = list->iterator();
     while (it.hasNext()) {
         products.push_back(it.next());
     }
 
-    //figure sort mode
     string sortType = "insert";
     string sortOrder = "asc";
 
-    if (arg1 == "desc") {
-        sortOrder = "desc";
-    } else if (arg1 == "merge") {
-        sortType = "merge";
-    }
+    if (arg1 == "desc") sortOrder = "desc";
+    else if (arg1 == "merge") sortType = "merge";
 
-    if (arg1 == "merge" && arg2 == "desc") {
-        sortOrder = "desc";
-    }
+    if (arg1 == "merge" && arg2 == "desc") sortOrder = "desc";
 
-    //define comparators
-    auto ascending = [](Product* a, Product* b) {
-        return stof(a->price) < stof(b->price);
-    };
-
-    auto descending = [](Product* a, Product* b) {
-        return stof(a->price) > stof(b->price);
-    };
+    auto asc = [](Product* a, Product* b) { return stof(a->price) < stof(b->price); };
+    auto desc = [](Product* a, Product* b) { return stof(a->price) > stof(b->price); };
 
     if (sortType == "insert") {
-        if (sortOrder == "asc") {
-            insertionSort(products, ascending);
-        } else {
-            insertionSort(products, descending);
-        }
-    } else if (sortType == "merge") {
-        if (sortOrder == "asc") {
-            mergeSort(products, ascending);
-        } else {
-            mergeSort(products, descending);
-        }
+        if (sortOrder == "asc") insertionSort(products, asc);
+        else insertionSort(products, desc);
+    } else {
+        if (sortOrder == "asc") mergeSort(products, asc);
+        else mergeSort(products, desc);
     }
 
-    //print result
     for (Product* p : products) {
         cout << p->id << " - " << p->name << " ($" << p->price << ")" << endl;
     }
 }
+
